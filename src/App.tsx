@@ -84,70 +84,53 @@ export default function App() {
   const [chatError, setChatError] = useState<string | null>(null);
   const [isGeneratingInsight, setIsGeneratingInsight] = useState(false);
 
-  // Listen to Auth State and process any incoming redirect result without race condition
+  // Unified Authentication Lifecycle
   useEffect(() => {
     let isMounted = true;
-    let redirectCheckDone = false;
-    let firstAuthResolved = false;
-    let latestUser: User | null = null;
+    let unsubscribe: (() => void) | null = null;
 
-    const checkLoadingCompletion = () => {
-      if (isMounted && redirectCheckDone && firstAuthResolved) {
-        setUser(latestUser);
-        if (latestUser) {
-          syncUserProfile(latestUser);
+    const initAuthLifecycle = async () => {
+      // 1. Process any pending redirect result first (if returning from Google OAuth redirect)
+      try {
+        await handleRedirectResult();
+      } catch (err: any) {
+        console.error('Redirect sign-in error:', err);
+        if (isMounted) {
+          setAuthError(err.message || 'Failed to complete Google Sign-In');
         }
-        setAuthLoading(false);
+      }
+
+      // 2. Attach onAuthStateChanged as the single authoritative source of truth
+      if (isMounted) {
+        unsubscribe = onAuthStateChanged(
+          auth,
+          (currentUser) => {
+            if (!isMounted) return;
+            setUser(currentUser);
+            if (currentUser) {
+              syncUserProfile(currentUser);
+            }
+            // Transition authLoading to false only after Firebase authentication state has fully resolved
+            setAuthLoading(false);
+          },
+          (err) => {
+            console.error('Auth observer error:', err);
+            if (isMounted) {
+              setAuthError(err.message || 'Authentication state error');
+              setAuthLoading(false);
+            }
+          }
+        );
       }
     };
 
-    // 1. Process redirect result if returning from Google OAuth redirect
-    handleRedirectResult()
-      .then((redirectUser) => {
-        if (redirectUser && isMounted) {
-          latestUser = redirectUser;
-        }
-      })
-      .catch((err: any) => {
-        console.error('Redirect sign-in error:', err);
-        if (isMounted) {
-          setAuthError(err.message || 'Failed to authenticate via Google redirect');
-        }
-      })
-      .finally(() => {
-        redirectCheckDone = true;
-        checkLoadingCompletion();
-      });
-
-    // 2. Authoritative listener for Firebase auth state changes
-    const unsubscribe = onAuthStateChanged(
-      auth,
-      (currentUser) => {
-        if (!isMounted) return;
-        latestUser = currentUser;
-        firstAuthResolved = true;
-
-        if (redirectCheckDone) {
-          setUser(currentUser);
-          if (currentUser) {
-            syncUserProfile(currentUser);
-          }
-          setAuthLoading(false);
-        }
-      },
-      (err) => {
-        console.error('Auth observer error:', err);
-        if (isMounted) {
-          setAuthError(err.message || 'Authentication error');
-          firstAuthResolved = true;
-          setAuthLoading(false);
-        }
-      }
-    );
+    initAuthLifecycle();
 
     return () => {
       isMounted = false;
-      unsubscribe();
+      if (unsubscribe) {
+        unsubscribe();
+      }
     };
   }, []);
 

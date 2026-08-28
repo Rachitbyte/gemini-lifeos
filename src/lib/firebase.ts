@@ -2,6 +2,7 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
   getAuth,
   GoogleAuthProvider,
+  signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
   signOut,
@@ -70,14 +71,35 @@ export const syncUserProfile = async (user: User): Promise<void> => {
 };
 
 /**
- * Initiates Google OAuth Sign-In via redirect (avoiding browser popup blocking)
+ * Initiates Google OAuth Sign-In using popup by default with automatic fallback to redirect
+ * if popup is blocked by the browser.
  */
-export const signInWithGoogle = async (): Promise<void> => {
-  await signInWithRedirect(auth, googleProvider);
+export const signInWithGoogle = async (): Promise<User | void> => {
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    if (result && result.user) {
+      await syncUserProfile(result.user);
+      return result.user;
+    }
+  } catch (error: any) {
+    const code = error?.code || '';
+    // If popup was blocked or prevented by browser/environment policy, fallback to redirect
+    if (
+      code === 'auth/popup-blocked' ||
+      code === 'auth/cancelled-popup-request' ||
+      code === 'auth/popup-closed-by-user' && error?.message?.includes('blocked')
+    ) {
+      console.warn('Popup blocked/unavailable, falling back to signInWithRedirect...', error);
+      await signInWithRedirect(auth, googleProvider);
+      return;
+    }
+    // Re-throw other errors (e.g. user cancelled popup intentionally or network error)
+    throw error;
+  }
 };
 
 /**
- * Handles processing the redirect result after the user returns to the application
+ * Handles processing the redirect result after the user returns to the application from Google redirect.
  */
 export const handleRedirectResult = async (): Promise<User | null> => {
   try {
@@ -87,7 +109,7 @@ export const handleRedirectResult = async (): Promise<User | null> => {
       return result.user;
     }
     return null;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Redirect sign-in error:', error);
     throw error;
   }
