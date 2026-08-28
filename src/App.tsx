@@ -8,6 +8,8 @@ import { onAuthStateChanged, type User } from 'firebase/auth';
 import {
   auth,
   signInWithGoogle,
+  handleRedirectResult,
+  syncUserProfile,
   signOutUser,
   getAuthToken,
   fetchMemories,
@@ -82,13 +84,39 @@ export default function App() {
   const [chatError, setChatError] = useState<string | null>(null);
   const [isGeneratingInsight, setIsGeneratingInsight] = useState(false);
 
-  // Listen to Auth State
+  // Listen to Auth State and process any incoming redirect result
   useEffect(() => {
+    let isMounted = true;
+
+    // Process redirect result if coming back from Google authentication redirect
+    handleRedirectResult()
+      .then((redirectUser) => {
+        if (redirectUser && isMounted) {
+          setUser(redirectUser);
+        }
+      })
+      .catch((err) => {
+        console.error('Redirect sign-in error:', err);
+        if (isMounted) {
+          setAuthError(err.message || 'Failed to authenticate via Google redirect');
+        }
+      });
+
+    // Listen to continuous auth state changes
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setAuthLoading(false);
+      if (isMounted) {
+        setUser(currentUser);
+        if (currentUser) {
+          syncUserProfile(currentUser);
+        }
+        setAuthLoading(false);
+      }
     });
-    return () => unsubscribe();
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   // Load all user data when user changes

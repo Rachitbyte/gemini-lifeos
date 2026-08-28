@@ -2,7 +2,8 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
   getAuth,
   GoogleAuthProvider,
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut,
   onAuthStateChanged,
   type User,
@@ -46,23 +47,50 @@ export const db = getFirestore(app, firebaseConfigData.firestoreDatabaseId || '(
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
-export const signInWithGoogle = async (): Promise<User> => {
-  const result = await signInWithPopup(auth, googleProvider);
-  // Update user profile record under /users/{uid}
-  if (result.user) {
-    const userRef = doc(db, 'users', result.user.uid);
+/**
+ * Synchronizes the user profile metadata into Firestore (/users/{uid})
+ */
+export const syncUserProfile = async (user: User): Promise<void> => {
+  if (!user) return;
+  try {
+    const userRef = doc(db, 'users', user.uid);
     await setDoc(
       userRef,
       {
-        email: result.user.email || '',
-        displayName: result.user.displayName || 'LifeOS User',
-        photoURL: result.user.photoURL || '',
+        email: user.email || '',
+        displayName: user.displayName || 'LifeOS User',
+        photoURL: user.photoURL || '',
         lastLoginAt: new Date().toISOString(),
       },
       { merge: true }
     );
+  } catch (err) {
+    console.warn('Could not sync user profile record to Firestore:', err);
   }
-  return result.user;
+};
+
+/**
+ * Initiates Google OAuth Sign-In via redirect (avoiding browser popup blocking)
+ */
+export const signInWithGoogle = async (): Promise<void> => {
+  await signInWithRedirect(auth, googleProvider);
+};
+
+/**
+ * Handles processing the redirect result after the user returns to the application
+ */
+export const handleRedirectResult = async (): Promise<User | null> => {
+  try {
+    const result = await getRedirectResult(auth);
+    if (result && result.user) {
+      await syncUserProfile(result.user);
+      return result.user;
+    }
+    return null;
+  } catch (error) {
+    console.error('Redirect sign-in error:', error);
+    throw error;
+  }
 };
 
 export const signOutUser = async (): Promise<void> => {
