@@ -1,0 +1,6 @@
+{
+  "name": "Gemini LifeOS",
+  "description": "Production-grade authenticated AI workspace for multi-turn conversations, structured memory extraction, goals, actions, and personal knowledge insights.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

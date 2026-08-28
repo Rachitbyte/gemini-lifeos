@@ -1,0 +1,82 @@
+{
+  "entities": {
+    "UserProfile": {
+      "path": "users/{userId}",
+      "description": "User profile and settings",
+      "fields": {
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "lastLoginAt": { "type": "string" }
+      }
+    },
+    "Conversation": {
+      "path": "users/{userId}/conversations/{conversationId}",
+      "description": "AI conversations with Gemini",
+      "fields": {
+        "title": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "messageCount": { "type": "number" },
+        "lastMessage": { "type": "string" }
+      }
+    },
+    "Message": {
+      "path": "users/{userId}/conversations/{conversationId}/messages/{messageId}",
+      "description": "Individual messages in a conversation",
+      "fields": {
+        "role": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string" }
+      }
+    },
+    "Memory": {
+      "path": "users/{userId}/memories/{memoryId}",
+      "description": "User-approved persistent memories",
+      "fields": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "category": { "type": "string" },
+        "sourceConversationId": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      }
+    },
+    "Goal": {
+      "path": "users/{userId}/goals/{goalId}",
+      "description": "User goals extracted or manually authored",
+      "fields": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string" },
+        "deadline": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      }
+    },
+    "Action": {
+      "path": "users/{userId}/actions/{actionId}",
+      "description": "Concrete action items",
+      "fields": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string" },
+        "dueDate": { "type": "string" },
+        "goalId": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      }
+    },
+    "Insight": {
+      "path": "users/{userId}/insights/{insightId}",
+      "description": "AI-generated synthesized observations from approved personal data",
+      "fields": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "type": { "type": "string" },
+        "createdAt": { "type": "string" }
+      }
+    }
+  }
+}
