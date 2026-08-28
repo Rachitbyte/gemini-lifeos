@@ -84,38 +84,46 @@ export default function App() {
   const [chatError, setChatError] = useState<string | null>(null);
   const [isGeneratingInsight, setIsGeneratingInsight] = useState(false);
 
-  // Listen to Auth State and process any incoming redirect result
+  // Listen to Auth State and process any incoming redirect result without race condition
   useEffect(() => {
     let isMounted = true;
+    let unsubscribe: (() => void) | null = null;
 
-    // Process redirect result if coming back from Google authentication redirect
-    handleRedirectResult()
-      .then((redirectUser) => {
+    const initAuth = async () => {
+      try {
+        // 1. Process redirect result first if returning from Google OAuth redirect
+        const redirectUser = await handleRedirectResult();
         if (redirectUser && isMounted) {
           setUser(redirectUser);
+          setAuthLoading(false);
         }
-      })
-      .catch((err) => {
+      } catch (err: any) {
         console.error('Redirect sign-in error:', err);
         if (isMounted) {
           setAuthError(err.message || 'Failed to authenticate via Google redirect');
         }
-      });
-
-    // Listen to continuous auth state changes
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (isMounted) {
-        setUser(currentUser);
-        if (currentUser) {
-          syncUserProfile(currentUser);
-        }
-        setAuthLoading(false);
       }
-    });
+
+      // 2. Subscribe to auth state changes to detect persisted or updated sessions
+      if (isMounted) {
+        unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+          if (!isMounted) return;
+          setUser(currentUser);
+          if (currentUser) {
+            syncUserProfile(currentUser);
+          }
+          setAuthLoading(false);
+        });
+      }
+    };
+
+    initAuth();
 
     return () => {
       isMounted = false;
-      unsubscribe();
+      if (unsubscribe) {
+        unsubscribe();
+      }
     };
   }, []);
 
