@@ -147,7 +147,7 @@ export const MemoriesView: React.FC<MemoriesViewProps> = ({
           {categories.map((c) => (
             <button
               key={c.id}
-              onClick={() => selectedCategory(c.id)}
+              onClick={() => setSelectedCategory(c.id)}
               className={`px-3 py-1.5 rounded-xl text-xs font-medium capitalize whitespace-nowrap transition-all ${
                 selectedCategory === c.id
                   ? 'bg-indigo-500 text-white font-semibold shadow-md shadow-indigo-500/20'

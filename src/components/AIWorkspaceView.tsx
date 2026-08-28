@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import Markdown from 'react-markdown';
 import {
   Send,
   Sparkles,
@@ -245,7 +246,95 @@ export const AIWorkspaceView: React.FC<AIWorkspaceViewProps> = ({
                         : 'bg-white/5 border border-white/10 backdrop-blur-md text-slate-200 shadow-sm rounded-tl-sm'
                     }`}
                   >
-                    <div className="whitespace-pre-wrap">{msg.content}</div>
+                    {isUser ? (
+                      <div className="whitespace-pre-wrap">{msg.content}</div>
+                    ) : (
+                      <div className="markdown-content text-slate-200 text-sm leading-relaxed">
+                        <Markdown
+                          components={{
+                            h1: ({ children }) => (
+                              <h1 className="text-base font-bold text-white mt-3 mb-1.5 first:mt-0">
+                                {children}
+                              </h1>
+                            ),
+                            h2: ({ children }) => (
+                              <h2 className="text-sm font-bold text-white mt-2.5 mb-1 first:mt-0">
+                                {children}
+                              </h2>
+                            ),
+                            h3: ({ children }) => (
+                              <h3 className="text-xs font-semibold text-slate-200 mt-2 mb-1 first:mt-0 uppercase tracking-wider">
+                                {children}
+                              </h3>
+                            ),
+                            p: ({ children }) => (
+                              <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>
+                            ),
+                            ul: ({ children }) => (
+                              <ul className="list-disc pl-5 space-y-1 mb-2 last:mb-0 text-slate-200">
+                                {children}
+                              </ul>
+                            ),
+                            ol: ({ children }) => (
+                              <ol className="list-decimal pl-5 space-y-1 mb-2 last:mb-0 text-slate-200">
+                                {children}
+                              </ol>
+                            ),
+                            li: ({ children }) => (
+                              <li className="leading-relaxed">{children}</li>
+                            ),
+                            strong: ({ children }) => (
+                              <strong className="font-semibold text-white">{children}</strong>
+                            ),
+                            em: ({ children }) => (
+                              <em className="italic text-slate-200">{children}</em>
+                            ),
+                            blockquote: ({ children }) => (
+                              <blockquote className="border-l-2 border-indigo-400 pl-3 my-2 text-slate-300 italic">
+                                {children}
+                              </blockquote>
+                            ),
+                            hr: () => <hr className="my-3 border-white/10" />,
+                            a: ({ href, children }) => (
+                              <a
+                                href={href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-indigo-400 hover:text-indigo-300 underline underline-offset-2"
+                              >
+                                {children}
+                              </a>
+                            ),
+                            code: ({ className, children, ...props }: any) => {
+                              const match = /language-(\w+)/.exec(className || '');
+                              const isCodeBlock = match || String(children).includes('\n');
+                              return isCodeBlock ? (
+                                <div className="my-2.5 rounded-xl overflow-hidden border border-white/10 bg-slate-900/90 shadow-inner">
+                                  {match && (
+                                    <div className="px-3 py-1 bg-white/5 border-b border-white/10 text-[10px] font-mono text-slate-400 uppercase tracking-wider">
+                                      {match[1]}
+                                    </div>
+                                  )}
+                                  <pre className="p-3 text-xs font-mono text-slate-200 overflow-x-auto">
+                                    <code>{children}</code>
+                                  </pre>
+                                </div>
+                              ) : (
+                                <code
+                                  className="bg-slate-800/90 text-teal-300 font-mono text-xs px-1.5 py-0.5 rounded border border-white/10"
+                                  {...props}
+                                >
+                                  {children}
+                                </code>
+                              );
+                            },
+                            pre: ({ children }) => <>{children}</>,
+                          }}
+                        >
+                          {msg.content}
+                        </Markdown>
+                      </div>
+                    )}
                     <div
                       className={`text-[10px] font-mono mt-2 flex items-center justify-end gap-1 ${
                         isUser ? 'text-indigo-200' : 'text-slate-500'
