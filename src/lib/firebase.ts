@@ -6,8 +6,6 @@ import {
   getRedirectResult,
   signOut,
   onAuthStateChanged,
-  setPersistence,
-  browserLocalPersistence,
   type User,
 } from 'firebase/auth';
 import {
@@ -45,12 +43,6 @@ const firebaseConfig = {
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
-
-// Initialize explicit local persistence
-setPersistence(auth, browserLocalPersistence).catch((err) => {
-  console.warn('Firebase setPersistence initialization notice:', err);
-});
-
 export const db = getFirestore(app, firebaseConfigData.firestoreDatabaseId || '(default)');
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
@@ -81,11 +73,6 @@ export const syncUserProfile = async (user: User): Promise<void> => {
  * Initiates Google OAuth Sign-In via redirect (avoiding browser popup blocking)
  */
 export const signInWithGoogle = async (): Promise<void> => {
-  try {
-    await setPersistence(auth, browserLocalPersistence);
-  } catch (err) {
-    console.warn('Firebase setPersistence notice before redirect:', err);
-  }
   await signInWithRedirect(auth, googleProvider);
 };
 

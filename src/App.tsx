@@ -87,43 +87,67 @@ export default function App() {
   // Listen to Auth State and process any incoming redirect result without race condition
   useEffect(() => {
     let isMounted = true;
-    let unsubscribe: (() => void) | null = null;
+    let redirectCheckDone = false;
+    let firstAuthResolved = false;
+    let latestUser: User | null = null;
 
-    const initAuth = async () => {
-      try {
-        // 1. Process redirect result first if returning from Google OAuth redirect
-        const redirectUser = await handleRedirectResult();
-        if (redirectUser && isMounted) {
-          setUser(redirectUser);
-          setAuthLoading(false);
+    const checkLoadingCompletion = () => {
+      if (isMounted && redirectCheckDone && firstAuthResolved) {
+        setUser(latestUser);
+        if (latestUser) {
+          syncUserProfile(latestUser);
         }
-      } catch (err: any) {
+        setAuthLoading(false);
+      }
+    };
+
+    // 1. Process redirect result if returning from Google OAuth redirect
+    handleRedirectResult()
+      .then((redirectUser) => {
+        if (redirectUser && isMounted) {
+          latestUser = redirectUser;
+        }
+      })
+      .catch((err: any) => {
         console.error('Redirect sign-in error:', err);
         if (isMounted) {
           setAuthError(err.message || 'Failed to authenticate via Google redirect');
         }
-      }
+      })
+      .finally(() => {
+        redirectCheckDone = true;
+        checkLoadingCompletion();
+      });
 
-      // 2. Subscribe to auth state changes to detect persisted or updated sessions
-      if (isMounted) {
-        unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-          if (!isMounted) return;
+    // 2. Authoritative listener for Firebase auth state changes
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      (currentUser) => {
+        if (!isMounted) return;
+        latestUser = currentUser;
+        firstAuthResolved = true;
+
+        if (redirectCheckDone) {
           setUser(currentUser);
           if (currentUser) {
             syncUserProfile(currentUser);
           }
           setAuthLoading(false);
-        });
+        }
+      },
+      (err) => {
+        console.error('Auth observer error:', err);
+        if (isMounted) {
+          setAuthError(err.message || 'Authentication error');
+          firstAuthResolved = true;
+          setAuthLoading(false);
+        }
       }
-    };
-
-    initAuth();
+    );
 
     return () => {
       isMounted = false;
-      if (unsubscribe) {
-        unsubscribe();
-      }
+      unsubscribe();
     };
   }, []);
 
