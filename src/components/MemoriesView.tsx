@@ -110,7 +110,7 @@ export const MemoriesView: React.FC<MemoriesViewProps> = ({
   };
 
   return (
-    <div className="flex-1 p-8 overflow-y-auto bg-transparent text-slate-100 space-y-6">
+    <div className="flex-1 min-h-0 p-8 overflow-y-auto bg-transparent text-slate-100 space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-white/10">
         <div>

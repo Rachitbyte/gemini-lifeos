@@ -54,7 +54,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const recentConversations = conversations.slice(0, 4);
 
   return (
-    <div className="flex-1 p-6 md:p-8 overflow-y-auto bg-transparent text-slate-200 space-y-8">
+    <div className="flex-1 min-h-0 p-6 md:p-8 overflow-y-auto bg-transparent text-slate-200 space-y-8">
       {/* Welcome Banner */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-white/10">
         <div>

@@ -47,7 +47,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <aside
       id="sidebar-nav"
-      className="w-64 bg-white/5 backdrop-blur-xl border-r border-white/10 flex flex-col justify-between shrink-0 h-screen sticky top-0 text-slate-200 z-30"
+      className="w-64 bg-white/5 backdrop-blur-xl border-r border-white/10 flex flex-col justify-between shrink-0 h-full text-slate-200 z-30"
     >
       {/* Brand Header */}
       <div>

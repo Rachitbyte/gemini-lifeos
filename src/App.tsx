@@ -516,14 +516,14 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen bg-[#030712] text-slate-200 overflow-hidden font-sans relative">
+    <div className="flex h-screen h-[100dvh] w-full bg-[#030712] text-slate-200 overflow-hidden font-sans relative">
       {/* Ambient background glow orbs for frosted glass reflections */}
       <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[140px] pointer-events-none -z-10" />
       <div className="absolute -bottom-32 -right-32 w-[600px] h-[600px] bg-teal-500/10 rounded-full blur-[140px] pointer-events-none -z-10" />
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[160px] pointer-events-none -z-10" />
 
       {/* Desktop Persistent Sidebar Navigation */}
-      <div className="hidden md:block z-20">
+      <div className="hidden md:block z-20 h-full">
         <Navbar
           currentView={currentView}
           onSelectView={setCurrentView}
@@ -536,7 +536,7 @@ export default function App() {
       </div>
 
       {/* Main Viewport Container */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden z-10">
+      <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden z-10">
         {/* Mobile Header */}
         <div className="md:hidden px-4 py-3 border-b border-white/10 bg-white/5 backdrop-blur-xl flex items-center justify-between z-20">
           <div className="flex items-center gap-2.5">

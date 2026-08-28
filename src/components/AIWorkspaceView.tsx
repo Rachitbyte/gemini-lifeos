@@ -62,14 +62,24 @@ export const AIWorkspaceView: React.FC<AIWorkspaceViewProps> = ({
   const [usePersonalContext, setUsePersonalContext] = useState(true);
   const [activeExtraction, setActiveExtraction] = useState<ExtractionResult | null>(null);
   const [isExtractingManual, setIsExtractingManual] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = (smooth = true) => {
+    if (messagesContainerRef.current) {
+      if (smooth) {
+        messagesContainerRef.current.scrollTo({
+          top: messagesContainerRef.current.scrollHeight,
+          behavior: 'smooth',
+        });
+      } else {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      }
+    }
   };
 
   useEffect(() => {
-    scrollToBottom();
+    // Only scroll the internal messages container; never call window.scrollTo or scrollIntoView on document
+    scrollToBottom(true);
   }, [messages, isLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,6 +88,8 @@ export const AIWorkspaceView: React.FC<AIWorkspaceViewProps> = ({
     if (!trimmed || isLoading) return;
 
     setInputValue('');
+    // Instant scroll on user submit
+    setTimeout(() => scrollToBottom(false), 20);
     try {
       const response = await onSendMessage(trimmed, usePersonalContext);
       if (
@@ -120,7 +132,7 @@ export const AIWorkspaceView: React.FC<AIWorkspaceViewProps> = ({
   ];
 
   return (
-    <div className="flex-1 flex flex-col h-screen bg-slate-950 text-slate-100 overflow-hidden">
+    <div className="flex-1 flex flex-col h-full min-h-0 bg-slate-950 text-slate-100 overflow-hidden">
       {/* Workspace Header */}
       <header className="px-6 py-3.5 border-b border-white/10 bg-white/5 backdrop-blur-xl flex items-center justify-between z-10 shrink-0">
         <div className="flex items-center gap-3">
@@ -173,7 +185,10 @@ export const AIWorkspaceView: React.FC<AIWorkspaceViewProps> = ({
       </header>
 
       {/* Main Dialogue Scroll Container */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <div
+        ref={messagesContainerRef}
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-6 space-y-6"
+      >
         {messages.length === 0 ? (
           /* Empty / Starter State */
           <div className="max-w-2xl mx-auto py-10 space-y-8 animate-fade-in">
@@ -381,8 +396,6 @@ export const AIWorkspaceView: React.FC<AIWorkspaceViewProps> = ({
                 </div>
               </div>
             )}
-
-            <div ref={messagesEndRef} />
           </div>
         )}
       </div>
