@@ -780,7 +780,11 @@ Generate a concise, impactful title and a structured, actionable observation (2-
   }
 });
 
-// Vite middleware & Production Serving Setup
+// Export configured Express app for Vercel Serverless Functions and standalone runner
+export default app;
+export { app };
+
+// Vite middleware & Production Serving Setup (for standalone Node execution in Cloud Run or Local Dev)
 async function initServer() {
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
@@ -801,6 +805,10 @@ async function initServer() {
   });
 }
 
-initServer().catch((err) => {
-  console.error('[Gemini LifeOS] Fatal server initialization error:', err);
-});
+// Only launch standalone listener when not in Vercel serverless environment
+if (!process.env.VERCEL) {
+  initServer().catch((err) => {
+    console.error('[Gemini LifeOS] Fatal server initialization error:', err);
+  });
+}
+
